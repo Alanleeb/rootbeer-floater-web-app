@@ -1,14 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore"; // Import firestore functions
-import { FIREBASE_DB } from "../firebase/firebase-config";
+import { FIREBASE_DB, db } from "../firebase/firebase-config";
 
 import ClickableComponent from "./ClickableComponent";
 import PrizePage from "./PrizePage"; // Import the PrizePageContainer component
+import { ref, onValue, get, set, off } from "firebase/database";
 
 function AllPrizes() {
   const [raffData, setRaffleData] = useState();
   const [selectedPrize, setSelectedPrize] = useState(null); // State to store the selected prize
   const [newPrize, setNewPrize] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [options, setOptions] = useState();
+  const totalPotentialOptions = ref(db, `totalPrizeOptions`);
+  const winningPrizeArr = ref(db, `winningPrizeArr`);
+
+  useEffect(() => {
+    // Log reference to ensure it's correct
+    console.log("Reference Path:", totalPotentialOptions.toString());
+
+    // Set up the listener for the Realtime Database
+    const unsubscribe = onValue(
+      totalPotentialOptions,
+      (snapshot) => {
+        const newData = snapshot.val();
+        console.log("NEW DATA:", newData); // Log the data retrieved from Firebase
+        setOptions(newData || {}); // Handle case where snapshot.val() could be null
+      },
+      (error) => {
+        // Log any errors from Firebase
+        console.error("Firebase Data Error:", error);
+      }
+    );
+
+    // Cleanup function to remove the listener when the component is unmounted
+    return () => {
+      unsubscribe(); // Correctly remove the listener
+      console.log("Unsubscribed from Realtime Database");
+    };
+  }, []); // Dependency array to include reference
 
   useEffect(() => {
     // Example usage:
@@ -56,12 +87,23 @@ function AllPrizes() {
       return []; // Return an empty array in case of error
     }
   };
+  // const handleToggleChange = () => {
+  //   setIsChecked(!isChecked);
+  // };
+
+  const handleCheckboxClick = (id) => {
+    const updatedSelectedIds = selectedIds.includes(id)
+      ? selectedIds.filter((selectedId) => selectedId !== id)
+      : [...selectedIds, id];
+    setSelectedIds(updatedSelectedIds);
+  };
 
   function handleBack() {
     setSelectedPrize(null);
     setNewPrize(false);
   }
-  console.log("Button clicked!", selectedPrize);
+  console.log("RAFF DATASS", raffData);
+  console.log("Button clicked!", options);
   return (
     <div
       style={{
@@ -156,11 +198,26 @@ function AllPrizes() {
             </div>
           </div>
         )}
-        {raffData &&
+        {/* {raffData &&
           !selectedPrize &&
           !newPrize &&
           raffData.map((r) => (
             <ClickableComponent key={r.id} onPress={() => handleClick(r.prize)}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "flex-start",
+                  width: "25%",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={r.active} // Set checked status based on r.active
+                  readOnly // Make the checkbox read-only
+                />
+                <label>{r.active ? `Active` : `Inactive`}</label>
+              </div>
               <div
                 style={{
                   display: "flex",
@@ -209,6 +266,92 @@ function AllPrizes() {
                 </div>
               </div>
             </ClickableComponent>
+          ))} */}
+        {raffData &&
+          !selectedPrize &&
+          !newPrize &&
+          raffData.map((r, index) => (
+            <div
+              key={r.id}
+              style={{
+                // display: "flex",
+                // flexDirection: "row",
+                cursor: "pointer",
+                padding: "10px",
+                backgroundColor: "#f0f0f0",
+                borderBottom: "1px",
+                borderBottomStyle: "solid",
+                borderBottomColor: "lightgrey",
+                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <div
+              // style={{
+              //   display: "flex",
+              //   flexDirection: "row",
+              //   alignItems: "center",
+              // }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(r.id)}
+                  onChange={() => handleCheckboxClick(r.id)}
+                />
+                <label>Select</label>
+              </div>
+              <ClickableComponent onPress={() => handleClick(r.prize)}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                      width: "25%",
+                    }}
+                  >
+                    <text>{r.prize}</text>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                      width: "25%",
+                    }}
+                  >
+                    <text>{r.active ? `Active` : `Inactive`}</text>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                      width: "25%",
+                    }}
+                  >
+                    <text>
+                      {/* {options[r.prize]["current"]} */}
+                      {/* {options[r.prize]["original"]} */}
+                    </text>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                      width: "25%",
+                    }}
+                  >
+                    <text>category</text>
+                  </div>
+                </div>
+              </ClickableComponent>
+            </div>
           ))}
       </div>
       {/* Render PrizePageContainer with the selected prize */}

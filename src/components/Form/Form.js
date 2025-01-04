@@ -12,7 +12,7 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import { set, ref } from "firebase/database";
+import { set, ref, get } from "firebase/database";
 import "./Form.scss";
 import RichTextEditor from "../RichTextEditor";
 
@@ -27,6 +27,7 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
     numberOfBalls = 0,
     ballSelectionNumber = 3,
     active = false,
+    winningPrizeArray = [],
   } = defaultFormData || {};
 
   const [formData, setFormData] = useState({
@@ -38,19 +39,48 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
     numberOfBalls: numberOfBalls,
     ballSelectionNumber: ballSelectionNumber,
     active: active,
+    winningPrizeArray: winningPrizeArray,
   });
   const [raffData, setRaffleData] = useState();
   const [isChecked, setIsChecked] = useState(
     Array(formData.previewImages.length).fill(false)
   );
+  const [winningPrizeData, setWinningPrizeData] = useState([{}]);
   const raffleModRef = ref(db, `userRaffleNumbers/${formData.prize}`);
   const totalPotentialOptions = ref(db, `totalPrizeOptions/${formData.prize}`);
+  const winningPrizeArrRef = ref(db, `winningPrizeArr`);
 
   const handleCheckboxChange = (index) => {
     const updatedCheckedState = [...isChecked];
     updatedCheckedState[index] = !updatedCheckedState[index];
     setIsChecked(updatedCheckedState);
   };
+
+  useEffect(() => {
+    get(winningPrizeArrRef)
+      .then((snapshot) => {
+        const existingData = snapshot.val();
+        // checks to see if the data for that prize already exists
+        if (existingData) {
+          setWinningPrizeData(existingData);
+          // don't overwrite
+          return;
+        }
+
+        return;
+      })
+      .then(() => {
+        console.log(
+          "Data successfully recieved from Firebase Realtime Database!"
+        );
+      })
+      .catch((error) => {
+        console.error(
+          "Error interacting with Firebase Realtime Database:",
+          error
+        );
+      });
+  }, [winningPrizeArrRef]);
 
   useEffect(() => {
     // Fetch raffle data only if it's not already fetched
@@ -216,6 +246,7 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
         numberOfBalls: formData.numberOfBalls,
         ballSelectionNumber: formData.ballSelectionNumber,
         active: formData.active,
+        winningPrizeArray: formData.winningPrizeArray,
       });
     } catch (error) {
       console.error("Error adding document to raffleData collection:", error);
@@ -320,7 +351,7 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
       }
     );
 
-    // gets data from the realtime database
+    // sets data to the realtime database
     try {
       // Data doesn't exist or your logic allows overwriting, proceed with the write
       set(raffleModRef, updatedDs[formData.prize]);
@@ -341,7 +372,7 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
   };
 
   const handleUpdate = async (event) => {
-    event.preventDefault();
+    event?.preventDefault();
     // Prepare the array to store image URLs
     const imageArr = [];
 
@@ -376,6 +407,7 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
         numberOfBalls: formData.numberOfBalls,
         ballSelectionNumber: formData.ballSelectionNumber,
         active: formData.active,
+        winningNumbers: formData.winningPrizeArray,
       });
 
       console.log("Document updated successfully.");
@@ -394,6 +426,7 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
       numberOfBalls: 0,
       ballSelectionNumber: 3,
       active: false,
+      winningPrizeArray: [],
     });
   };
 
@@ -416,6 +449,7 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
           numberOfBalls: data.numberOfBalls,
           ballSelectionNumber: data.ballSelectionNumber,
           active: data.active,
+          winningPrizeArray: data.winningPrizeArray,
         });
       });
       return raffleData; // Return the array of raffle data
@@ -465,6 +499,33 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
       previewImages: _previewImages,
     });
   };
+
+  function handleWinningRaffle(s) {
+    winningPrizeArray.push(s);
+    console.log("poopy pants", winningPrizeArray);
+
+    setWinningPrizeData();
+
+    console.log("WINNING PRIZE DATA", winningPrizeData);
+    // // sets data to the realtime database
+    // try {
+    //   // Data doesn't exist or your logic allows overwriting, proceed with the write
+    //   set(winningPrizeArrRef, updatedDs[formData.prize]);
+    //   set(totalPotentialOptions, {
+    //     original: Math.pow(
+    //       formData.numberOfBalls,
+    //       formData.ballSelectionNumber
+    //     ),
+    //     current: Math.pow(formData.numberOfBalls, formData.ballSelectionNumber),
+    //   });
+    //   return;
+    // } catch (error) {
+    //   console.error(
+    //     "Error interacting with Firebase Realtime Database:",
+    //     error
+    //   );
+    // }
+  }
 
   return (
     <>
@@ -662,6 +723,59 @@ const MyForm = ({ defaultFormData, isNewPrize }) => {
           ) : (
             <button type="submit">Update</button>
           )}
+        </div>
+      </form>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="ballOneSelection">Ball One Selection:</label>
+          <input
+            type="number"
+            id="ballOneSelection"
+            name="ballOneSelection"
+            value={formData.ballOneSelection}
+            onChange={handleInputChange}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => handleWinningRaffle(formData.ballOneSelection)}
+          >
+            Submit Ball One
+          </button>
+        </div>
+        <div>
+          <label htmlFor="ballTwoSelection">Ball Two Selection:</label>
+          <input
+            type="number"
+            id="ballTwoSelection"
+            name="ballTwoSelection"
+            value={formData.ballTwoSelection}
+            onChange={handleInputChange}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => handleWinningRaffle(formData.ballTwoSelection)}
+          >
+            Submit Ball Two
+          </button>
+        </div>
+        <div>
+          <label htmlFor="ballThreeSelection">Ball Three Selection:</label>
+          <input
+            type="number"
+            id="ballThreeSelection"
+            name="ballThreeSelection"
+            value={formData.ballThreeSelection}
+            onChange={handleInputChange}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => handleWinningRaffle(formData.ballThreeSelection)}
+          >
+            Submit Ball Three
+          </button>
         </div>
       </form>
     </>
