@@ -9,6 +9,7 @@ import About from "./components/About";
 import Story from "./components/Story";
 import Suggestions from "./components/Suggestions";
 import reportWebVitals from "./reportWebVitals";
+import AdminDashboard from './components/AdminDashboard';
 
 const router = createBrowserRouter([
   {
@@ -20,8 +21,8 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/allprizes",
-        element: <AllPrizes />,
+        path: "/admin",
+        element: <AdminDashboard />,
       },
       {
         path: "/about",

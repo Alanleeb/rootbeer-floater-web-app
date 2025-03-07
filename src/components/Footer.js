@@ -4,7 +4,7 @@ import './Footer.css';
 
 const Footer = () => {
   const location = useLocation();
-  const isAllPrizesRoute = location.pathname === '/allprizes';
+  const isAdminRoute = location.pathname === '/admin';
 
   return (
     <footer className="footer">
@@ -13,9 +13,9 @@ const Footer = () => {
           <div className="footer-section">
             <p>&copy; {new Date().getFullYear()} Raffle Ball. All rights reserved.</p>
           </div>
-          {!isAllPrizesRoute && (
+          {!isAdminRoute && (
             <div className="footer-section">
-              <Link to="/allprizes" className="employee-link">
+              <Link to="/admin" className="employee-link">
                 Employee Access
               </Link>
             </div>
