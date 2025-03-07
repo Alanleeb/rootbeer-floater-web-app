@@ -1,0 +1,44 @@
+.prizes-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: calc(100vh - 144px); /* Account for header and footer */
+}
+
+.prizes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+.prize-card {
+  background: var(--bg-light);
+  border-radius: 8px;
+  box-shadow: var(--shadow-light);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.dark .prize-card {
+  background: var(--bg-dark);
+  box-shadow: var(--shadow-dark);
+}
+
+.prize-card:hover {
+  transform: translateY(-4px);
+}
+
+@media (max-width: 768px) {
+  .prizes-container {
+    padding: 1rem;
+  }
+  
+  .prizes-grid {
+    grid-template-columns: 1fr;
+  }
+} 

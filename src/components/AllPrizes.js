@@ -108,10 +108,11 @@ function AllPrizes() {
     <div
       style={{
         backgroundColor: "lightgrey",
-        height: "100vh", // Set height to 100vh
-        width: "100vw", // Set width to 100vw
+        height: "100vh",
+        width: "100vw",
         margin: 0,
-        padding: 0,
+        alignItems: "center",
+        paddingTop: 50
       }}
     >
       <div
@@ -198,75 +199,6 @@ function AllPrizes() {
             </div>
           </div>
         )}
-        {/* {raffData &&
-          !selectedPrize &&
-          !newPrize &&
-          raffData.map((r) => (
-            <ClickableComponent key={r.id} onPress={() => handleClick(r.prize)}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "flex-start",
-                  width: "25%",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={r.active} // Set checked status based on r.active
-                  readOnly // Make the checkbox read-only
-                />
-                <label>{r.active ? `Active` : `Inactive`}</label>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "flex-start",
-                    width: "25%",
-                  }}
-                >
-                  <text>{r.prize}</text>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "flex-start",
-                    width: "25%",
-                  }}
-                >
-                  <text>{r.active ? `Active` : `Inactive`}</text>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "flex-start",
-                    width: "25%",
-                  }}
-                >
-                  <text>inventory</text>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "flex-start",
-                    width: "25%",
-                  }}
-                >
-                  <text>category</text>
-                </div>
-              </div>
-            </ClickableComponent>
-          ))} */}
         {raffData &&
           !selectedPrize &&
           !newPrize &&
@@ -274,8 +206,6 @@ function AllPrizes() {
             <div
               key={r.id}
               style={{
-                // display: "flex",
-                // flexDirection: "row",
                 cursor: "pointer",
                 padding: "10px",
                 backgroundColor: "#f0f0f0",
@@ -285,13 +215,7 @@ function AllPrizes() {
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             >
-              <div
-              // style={{
-              //   display: "flex",
-              //   flexDirection: "row",
-              //   alignItems: "center",
-              // }}
-              >
+              <div>
                 <input
                   type="checkbox"
                   checked={selectedIds.includes(r.id)}
@@ -334,10 +258,7 @@ function AllPrizes() {
                       width: "25%",
                     }}
                   >
-                    <text>
-                      {/* {options[r.prize]["current"]} */}
-                      {/* {options[r.prize]["original"]} */}
-                    </text>
+                    <text>inventory</text>
                   </div>
                   <div
                     style={{
@@ -353,24 +274,36 @@ function AllPrizes() {
               </ClickableComponent>
             </div>
           ))}
+        {selectedPrize && !newPrize && (
+          <PrizePage
+            selectedPrize={selectedPrize}
+            isNewPrize={false}
+            handleBack={handleBack}
+          />
+        )}
+        {newPrize && (
+          <PrizePage
+            selectedPrize={null}
+            isNewPrize={true}
+            handleBack={handleBack}
+          />
+        )}
       </div>
-      {/* Render PrizePageContainer with the selected prize */}
-      {selectedPrize && !newPrize && (
-        <PrizePage
-          selectedPrize={selectedPrize}
-          isNewPrize={false}
-          handleBack={handleBack}
-        />
-      )}
-      {newPrize && (
-        <PrizePage
-          selectedPrize={null}
-          isNewPrize={true}
-          handleBack={handleBack}
-        />
-      )}
     </div>
   );
 }
+
+// Styles
+const tableHeaderStyle = {
+  padding: "12px 16px",
+  textAlign: "left",
+  fontWeight: "600",
+  color: "#4b5563",
+};
+
+const tableCellStyle = {
+  padding: "12px 16px",
+  borderBottom: "1px solid #dee2e6",
+};
 
 export default AllPrizes;

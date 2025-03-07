@@ -1,0 +1,23 @@
+.app {
+  min-height: 100vh;
+  padding-top: 64px; /* Height of header */
+  padding-bottom: 50px; /* Reduced to match new footer height */
+  position: relative;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Dark mode styles */
+.dark-mode .app {
+  background-color: var(--bg-dark);
+}
+
+@media (max-width: 640px) {
+  .main-content {
+    padding: 1rem;
+  }
+} 
