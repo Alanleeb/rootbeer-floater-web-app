@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AllPrizes from './AllPrizes';
+import StreamingDashboard from './StreamingDashboard';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -24,12 +25,7 @@ const AdminDashboard = () => {
       
       <div className="tab-content">
         {activeTab === 'prizes' && <AllPrizes />}
-        {activeTab === 'streaming' && (
-          <div className="streaming-tab">
-            <h2>Streaming Controls</h2>
-            <p>Streaming features coming soon...</p>
-          </div>
-        )}
+        {activeTab === 'streaming' && <StreamingDashboard />}
       </div>
     </div>
   );
