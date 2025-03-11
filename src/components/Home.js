@@ -10,32 +10,40 @@ const Home = () => {
   useEffect(() => {
     // Fetch YouTube video ID from Firebase
     const youtubeRef = ref(db, 'settings/youtubeVideo');
-    onValue(youtubeRef, (snapshot) => {
+    const unsubscribeYoutube = onValue(youtubeRef, (snapshot) => {
       const data = snapshot.val();
+      console.log('YouTube data:', data);
       if (data && data.videoId) {
         setYoutubeVideoId(data.videoId);
       }
     });
+
+    return () => {
+      unsubscribeYoutube();
+    };
   }, []);
 
   return (
     <div className="home-container">
-      {youtubeVideoId && (
-        <div className="video-section">
-          <div className="video-wrapper">
+      <div className="video-section">
+        <div className="video-wrapper">
+          {youtubeVideoId ? (
             <iframe
               width="100%"
               height="100%"
-              src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+              src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-            ></iframe>
-          </div>
+            />
+          ) : (
+            <div className="no-video-overlay">
+              <p>No video available</p>
+            </div>
+          )}
         </div>
-      )}
-      {/* ... rest of your home content ... */}
+      </div>
     </div>
   );
 };

@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaVideo, FaVideoSlash, FaMicrophone, FaMicrophoneSlash, 
   FaDesktop, FaCog, FaChartLine, FaUsers, FaCircle, FaYoutube, FaRecordVinyl } from 'react-icons/fa';
-import { ref, set, onValue } from 'firebase/database';
+import { ref, set, onValue, push } from 'firebase/database';
 import { db } from '../firebase/firebase-config';
+import socket from '../services/socket';
 import './StreamingDashboard.css';
 
 const StreamingDashboard = () => {
@@ -41,6 +42,7 @@ const StreamingDashboard = () => {
   const mediaRecorderRef = useRef(null);
   const recordingRef = useRef(null);
   const recordedChunksRef = useRef([]);
+  const peerConnectionRef = useRef(null);
 
   useEffect(() => {
     // Cleanup function
@@ -53,6 +55,9 @@ const StreamingDashboard = () => {
       }
       if (recordingRef.current && recordingRef.current.state === 'recording') {
         recordingRef.current.stop();
+      }
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
       }
     };
   }, []);
@@ -68,6 +73,70 @@ const StreamingDashboard = () => {
       }
     });
   }, []);
+
+  useEffect(() => {
+    // When stream starts, share the stream
+    if (streamRef.current && streamData.isLive) {
+      // Save stream data to Firebase
+      set(ref(db, 'streams/live'), {
+        ...streamData,
+        isLive: true,
+        startTime: new Date().toISOString()
+      });
+
+      // Connect to socket server for stream sharing
+      socket.emit('startStream', { streamId: streamRef.current.id });
+
+      const handleViewerConnected = async ({ viewerId }) => {
+        try {
+          // Create peer connection for this viewer
+          const peerConnection = new RTCPeerConnection({
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+          });
+
+          // Add all tracks from our stream to the peer connection
+          streamRef.current.getTracks().forEach(track => {
+            peerConnection.addTrack(track, streamRef.current);
+          });
+
+          // Create and send offer
+          const offer = await peerConnection.createOffer();
+          await peerConnection.setLocalDescription(offer);
+
+          socket.emit('offer', {
+            offer,
+            viewerId
+          });
+
+          // Handle ICE candidates
+          peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+              socket.emit('ice-candidate', {
+                candidate: event.candidate,
+                viewerId
+              });
+            }
+          };
+
+          // Store the peer connection
+          peerConnectionRef.current = peerConnection;
+        } catch (err) {
+          console.error('Error creating peer connection:', err);
+        }
+      };
+
+      // Add event listener
+      socket.on('viewer-connected', handleViewerConnected);
+
+      return () => {
+        // Remove event listener
+        socket.removeListener('viewer-connected', handleViewerConnected);
+        if (peerConnectionRef.current) {
+          peerConnectionRef.current.close();
+        }
+      };
+    }
+  }, [streamData.isLive]);
 
   const startStream = async () => {
     if (!streamData.title.trim()) {
@@ -121,7 +190,7 @@ const StreamingDashboard = () => {
         mediaRecorderRef.current.stop();
       }
 
-      // Update Firebase
+      // Update Firebase to indicate stream is not live
       await set(ref(db, 'streams/live'), {
         isLive: false,
         endTime: new Date().toISOString()
@@ -293,6 +362,7 @@ const StreamingDashboard = () => {
         return;
       }
 
+      // Update Firebase with both URL and videoId
       await set(ref(db, 'settings/youtubeVideo'), {
         url: youtubeUrl,
         videoId: videoId,
@@ -300,6 +370,7 @@ const StreamingDashboard = () => {
       });
 
       setYoutubeVideoId(videoId);
+      console.log('YouTube URL updated successfully:', videoId);
       alert('YouTube URL updated successfully!');
     } catch (error) {
       console.error('Error updating YouTube URL:', error);
@@ -428,14 +499,32 @@ const StreamingDashboard = () => {
           </div>
           
           <div className="preview-container">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-            {!devices.camera && !devices.screen && (
+            {streamData.isLive ? (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              youtubeVideoId ? (
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <div className="no-video-overlay">
+                  <p>No video source</p>
+                </div>
+              )
+            )}
+            {streamData.isLive && !devices.camera && !devices.screen && (
               <div className="no-video-overlay">
                 <p>No video source</p>
               </div>
